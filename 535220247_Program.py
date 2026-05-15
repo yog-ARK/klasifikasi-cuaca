@@ -6,7 +6,11 @@ import matplotlib.patches as mpatches
 from matplotlib.colors import LinearSegmentedColormap
 import joblib
 import warnings
+from pathlib import Path
 warnings.filterwarnings('ignore')
+
+# Direktori tempat file .py berada — selalu benar di lokal maupun Community Cloud
+BASE_DIR = Path(__file__).parent
 
 # ─── PAGE CONFIG ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -43,7 +47,7 @@ ICONS = {
 # ─── LOAD DATA & MODELS ────────────────────────────────────────────────────────
 @st.cache_data
 def load_main_data():
-    df = pd.read_excel("data_preprocessed.xlsx")
+    df = pd.read_excel(BASE_DIR / "data_preprocessed.xlsx")
     df['Tanggal'] = pd.to_datetime(df['Tanggal']).dt.strftime('%d/%m/%Y')
     return df
 
@@ -52,7 +56,7 @@ def load_main_data():
 def load_folds():
     folds = []
     for i in range(1, 6):
-        fold_df = pd.read_excel(f"fold_{i}.xlsx")
+        fold_df = pd.read_excel(BASE_DIR / f"fold_{i}.xlsx")
         fold_df['Tanggal'] = pd.to_datetime(fold_df['Tanggal']).dt.strftime('%d/%m/%Y')
         folds.append(fold_df)
     return folds
@@ -62,16 +66,16 @@ def load_folds():
 def load_models():
     models_fold = []
     for i in range(1, 6):
-        m = joblib.load(f"model_fold_{i}.pkl")
+        m = joblib.load(BASE_DIR / f"model_fold_{i}.pkl")
         models_fold.append(m)
-    model_full = joblib.load("model_full.pkl")
+    model_full = joblib.load(BASE_DIR / "model_full.pkl")
     return models_fold, model_full
 
 
 @st.cache_resource
 def load_label_encoder():
     from sklearn.preprocessing import LabelEncoder
-    df = pd.read_excel("data_preprocessed.xlsx")
+    df = pd.read_excel(BASE_DIR / "data_preprocessed.xlsx")
     le_lokasi = LabelEncoder()
     le_lokasi.fit(df['Lokasi'])
     le_target = LabelEncoder()
@@ -261,7 +265,7 @@ except Exception as e:
 
 if not data_loaded:
     st.error(
-        f"❌ Gagal memuat data atau model. Pastikan file berikut ada di direktori yang sama dengan `full.py`:\n\n"
+        f"❌ Gagal memuat data atau model. Pastikan file berikut ada di direktori yang sama dengan file program:\n\n"
         f"- `data_preprocessed.xlsx`\n"
         f"- `fold_1.xlsx` s.d. `fold_5.xlsx`\n"
         f"- `model_fold_1.pkl` s.d. `model_fold_5.pkl`\n"
@@ -617,7 +621,9 @@ for fi, tab in enumerate(fold_tabs[:-1]):
 
         fig.colorbar(im, ax=ax, fraction=0.04, pad=0.03)
         fig.tight_layout()
-        st.pyplot(fig, use_container_width=True)
+        col_cm, _ = st.columns([2, 1])
+        with col_cm:
+            st.pyplot(fig)
         plt.close()
 
         # Visualisasi variasi prediksi (hanya muncul saat filter variasi dicentang)
@@ -750,7 +756,9 @@ with fold_tabs[-1]:
                             fontsize=9, fontweight='bold', color=color)
         fig_all.colorbar(im_all, ax=ax_all, fraction=0.04, pad=0.03)
         fig_all.tight_layout()
-        st.pyplot(fig_all, use_container_width=True)
+        col_cm_all, _ = st.columns([2, 1])
+        with col_cm_all:
+            st.pyplot(fig_all)
         plt.close()
 
         if ev_variasi:
@@ -918,7 +926,9 @@ if len(comp_df) > 0:
                 ax.text(j, i, str(val), ha='center', va='center', fontsize=7, fontweight='bold', color=color)
         fig.colorbar(im, ax=ax, fraction=0.04, pad=0.03)
         fig.tight_layout()
-        st.pyplot(fig, use_container_width=True)
+        col_hm, _ = st.columns([2, 1])
+        with col_hm:
+            st.pyplot(fig)
         plt.close()
 
 
@@ -959,7 +969,7 @@ with st.form("form_klasifikasi"):
     with col_i2:
         input_suhu = st.number_input(
             "Suhu (°C)",
-            min_value=0.0, max_value=50.0,
+            min_value=15.0, max_value=45.0,
             value=float(df['Suhu (celcius)'].median()),
             step=0.1,
             help="Suhu udara dalam derajat Celsius"
@@ -975,17 +985,17 @@ with st.form("form_klasifikasi"):
     with col_i3:
         input_angin = st.number_input(
             "Kecepatan Angin (km/h)",
-            min_value=0.0, max_value=410.0,
+            min_value=0.0, max_value=150.0,
             value=float(df['Angin (km/h)'].median()),
             step=0.1,
             help="Kecepatan angin dalam km/jam"
         )
         input_uv = st.number_input(
             "Intensitas UV",
-            min_value=0.0, max_value=12.0,
+            min_value=0.0, max_value=15.0,
             value=float(df['Intensitas UV'].median()),
             step=0.1,
-            help="Indeks UV (0–11) (pilih 12 jika 11+)"
+            help="Indeks UV (0–15)"
         )
 
     submitted = st.form_submit_button("🔍 Klasifikasikan", use_container_width=True, type="primary")
