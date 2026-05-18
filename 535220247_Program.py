@@ -944,7 +944,7 @@ st.divider()
 st.header("🔮 Klasifikasi Data Baru")
 st.write(
     "Masukkan data observasi cuaca baru untuk diklasifikasikan menggunakan "
-    "**model_full.pkl** (model yang dilatih dengan seluruh data). "
+    "model yang dilatih dengan seluruh data. "
     "Pastikan semua kolom terisi dengan benar."
 )
 
@@ -959,11 +959,11 @@ with st.form("form_klasifikasi"):
             options=sorted(df['Lokasi'].unique().tolist()),
             help="Pilih wilayah administratif DKI Jakarta"
         )
-        input_waktu = st.selectbox(
-            "Waktu Pengamatan",
-            options=[9, 15],
-            format_func=lambda x: "09.00 WIB" if x == 9 else "15.00 WIB",
-            help="Waktu pengamatan cuaca"
+        input_waktu = st.number_input(
+            "Waktu Pengamatan (jam)",
+            min_value=0, max_value=23,
+            value=9, step=1,
+            help="Masukkan jam pengamatan dalam format 24 jam (0–23)"
         )
 
     with col_i2:
@@ -1026,7 +1026,7 @@ if submitted:
 | Parameter | Nilai |
 |-----------|-------|
 | Lokasi | {input_lokasi} |
-| Waktu | {'09.00 WIB' if input_waktu == 9 else '15.00 WIB'} |
+| Waktu | {input_waktu:02d}.00 WIB |
 | Suhu | {input_suhu:.1f} °C |
 | Kelembapan | {input_kelembapan:.1f} % |
 | Angin | {input_angin:.1f} km/h |
